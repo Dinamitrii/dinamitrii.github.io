@@ -1,1 +1,2 @@
-window.API_BASE = 'https://minnesota-iron-sectors-concern.trycloudflare.com';
+window.API_BASE = 'https://cartridge-admissions-serial-carmen.trycloudflare.com';
+
