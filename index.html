@@ -92,8 +92,21 @@ async function refresh() {
     img.src = API + '/api/images/' + im.id;
     img.alt = im.prompt;
     const a = node('a', 'Изтегли PNG');
-    a.href = img.src;
-    a.download = 'image-' + im.id + '.png';
+    a.href = '#';
+    a.onclick = async e => {
+      e.preventDefault();
+      // Cross-origin <a download> is ignored by browsers, so fetch the bytes
+      // ourselves (with the session cookie) and download via a blob: URL,
+      // which browsers always respect regardless of the original origin.
+      const resp = await fetch(img.src, { credentials: 'include' });
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'image-' + im.id + '.png';
+      link.click();
+      URL.revokeObjectURL(url);
+    };
     el('images').append(img, node('p', im.prompt), a);
   }
 }
