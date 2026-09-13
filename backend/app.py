@@ -211,7 +211,7 @@ def protect():
         supplied = request.headers.get('X-CSRF-Token', '')
         if not secrets.compare_digest(supplied, session['csrf']):
             raise Problem('Невалиден CSRF token. Презаредете страницата.', 403)
-    public = {'/api/register', '/api/login', '/api/csrf', '/webhooks/payment'}
+    public = {'/api/register', '/api/login', '/api/csrf', '/api/health', '/webhooks/payment'}
     if request.path not in public and not g.user:
         raise Problem('Необходимо е да влезете.', 401)
 

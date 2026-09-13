@@ -42,11 +42,11 @@ class PortalTests(unittest.TestCase):
         return client.post(path, json=data or {}, headers={'X-CSRF-Token': csrf})
 
     def register(self, client, email):
-        client.get('/register')
+        client.get('/api/csrf')
         with client.session_transaction() as s:
             csrf = s['csrf']
-        r = client.post('/register', data={'email': email, 'password': 'long-test-password', 'csrf': csrf, 'plan': 'paid'})
-        self.assertEqual(r.status_code, 302)
+        r = client.post('/api/register', json={'email': email, 'password': 'long-test-password', 'plan': 'paid'}, headers={'X-CSRF-Token': csrf})
+        self.assertEqual(r.status_code, 200)
 
     def event(self, kind, amount):
         with m.app.app_context():
@@ -60,6 +60,22 @@ class PortalTests(unittest.TestCase):
         self.assertLessEqual(data['max_tokens'] + 116, 1500)
         return {'choices': [{'message': {'content': 'Здравей!'}}], 'usage': {'prompt_tokens': 100, 'completion_tokens': 20}}
 
+    def test_public_health_and_cors(self):
+        client = m.app.test_client()
+        response = client.get('/api/health')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json, {'ok': True})
+        self.assertEqual(client.get('/api/me').status_code, 401)
+        origin = m.FRONTEND_ORIGINS[0]
+        response = client.options('/api/chat', headers={
+            'Origin': origin, 'Access-Control-Request-Method': 'POST',
+            'Access-Control-Request-Headers': 'Content-Type,X-CSRF-Token'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers['Access-Control-Allow-Origin'], origin)
+        self.assertEqual(response.headers['Access-Control-Allow-Credentials'], 'true')
+        response = client.get('/api/csrf', headers={'Origin': 'https://untrusted.invalid'})
+        self.assertNotIn('Access-Control-Allow-Origin', response.headers)
+
     def test_auth_csrf_hash_and_server_plan(self):
         self.assertEqual(self.client.get('/api/state').json['plan'], 'free')
         self.assertEqual(self.client.post('/api/reset', json={}).status_code, 403)
@@ -67,7 +83,7 @@ class PortalTests(unittest.TestCase):
             h = m.db().execute('SELECT password_hash FROM users').fetchone()[0]
             self.assertTrue(h.startswith('scrypt:'))
             self.assertNotIn('long-test-password', h)
-        self.assertEqual(self.post('/logout').status_code, 302)
+        self.assertEqual(self.post('/api/logout').status_code, 200)
         self.assertEqual(self.client.get('/api/state').status_code, 401)
 
     def test_chat_usage_memory_reset_and_isolation(self):
@@ -216,21 +232,22 @@ class PortalTests(unittest.TestCase):
             self.assertEqual(self.post('/api/chat', {'message': 'Hi'}).status_code, 402)
 
     def test_ui_and_session_relogin_persistence(self):
-        for path in ['/', '/upgrade']:
+        for path in ['/api/me', '/api/upgrade']:
             r = self.client.get(path)
             self.assertEqual(r.status_code, 200)
-            self.assertIn("script-src 'nonce-", r.headers['Content-Security-Policy'])
+            self.assertTrue(r.is_json)
+            self.assertEqual(r.headers['Cache-Control'], 'no-store')
         self.post('/api/facts', {'content': '<script>alert(1)</script>'})
         with self.client.session_transaction() as s:
             old_auth = s['auth']
-        self.post('/logout')
+        self.post('/api/logout')
         with m.app.app_context():
             self.assertIsNone(m.db().execute('SELECT * FROM sessions WHERE token_hash=?', (m.digest(old_auth),)).fetchone())
-        self.client.get('/login')
+        self.client.get('/api/csrf')
         with self.client.session_transaction() as s:
             csrf = s['csrf']
-        r = self.client.post('/login', data={'email': 'a@example.com', 'password': 'long-test-password', 'csrf': csrf})
-        self.assertEqual(r.status_code, 302)
+        r = self.client.post('/api/login', json={'email': 'a@example.com', 'password': 'long-test-password'}, headers={'X-CSRF-Token': csrf})
+        self.assertEqual(r.status_code, 200)
         self.assertEqual(len(self.client.get('/api/state').json['facts']), 1)
 
 
@@ -329,14 +346,18 @@ class StripeTests(unittest.TestCase):
         self.assertEqual(self.plan(),'free')
 
     def test_success_redirect_alone_does_not_grant(self):
-        self.assertEqual(self.client.get('/upgrade?checkout=success').status_code,200)
+        self.assertEqual(self.client.get('/api/upgrade?checkout=success').status_code,200)
         self.assertEqual(self.plan(),'free')
 
     def test_checkout_uses_server_price_and_reuses_open_session(self):
         self.sub['status']='canceled'
         with patch.object(m.stripe.checkout.Session,'create',return_value={'id':'cs_test','url':'https://checkout.stripe.com/test'}) as create, patch.object(m.stripe.checkout.Session,'retrieve',return_value={'status':'open','url':'https://checkout.stripe.com/test'}):
-            self.assertEqual(self.post('/api/checkout').status_code,303)
-            self.assertEqual(self.post('/api/checkout').status_code,303)
+            response = self.post('/api/checkout')
+            self.assertEqual(response.status_code,200)
+            self.assertEqual(response.json['url'], 'https://checkout.stripe.com/test')
+            response = self.post('/api/checkout')
+            self.assertEqual(response.status_code,200)
+            self.assertEqual(response.json['url'], 'https://checkout.stripe.com/test')
             self.assertEqual(create.call_count,1)
             self.assertEqual(create.call_args.kwargs['line_items'],[{'price':'price_month','quantity':1}])
             self.assertTrue(create.call_args.kwargs['idempotency_key'])
