@@ -1,0 +1,45 @@
+# /etc/systemd/system/local-ai-portal.service
+#
+# Replace the paths and user before installing. Then:
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now local-ai-portal
+#   sudo systemctl status local-ai-portal
+#   journalctl -u local-ai-portal -f      # logs
+
+[Unit]
+Description=Local AI Portal (Flask backend, gunicorn)
+After=network.target
+
+[Service]
+# The user that should own this process - NOT root. Create one if needed:
+#   sudo useradd -r -m -s /usr/sbin/nologin aiportal
+User=aiportal
+Group=aiportal
+
+# Directory containing app.py, requirements.txt, .env, and the venv below.
+WorkingDirectory=/opt/local-ai-portal/backend
+
+# Loads STRIPE_*, FRONTEND_URL, COOKIE_*, LLAMA_URL, SD_URL, etc.
+EnvironmentFile=/opt/local-ai-portal/backend/.env
+
+# Binds to loopback only - nginx is the public-facing side (see the nginx conf).
+# -w 2: two worker processes. Increase cautiously; each holds its own SQLite
+# connection pool but the app's file locks (fcntl) already serialize per-user
+# writes, so more workers mainly help concurrent *different* users.
+ExecStart=/opt/local-ai-portal/backend/venv/bin/gunicorn \
+    --workers 2 \
+    --bind 127.0.0.1:5005 \
+    --timeout 1800 \
+    app:app
+
+Restart=on-failure
+RestartSec=5
+
+# Basic hardening - relax if it stops the app from working (e.g. NoNewPrivileges
+# is fine, but ProtectSystem=strict needs ReadWritePaths for the data dir).
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/opt/local-ai-portal/backend
+
+[Install]
+WantedBy=multi-user.target
