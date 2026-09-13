@@ -1,0 +1,64 @@
+* { box-sizing: border-box; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; margin: 0; padding: 24px; min-height: 100vh; color: #333; }
+main { max-width: 1440px; margin: 0 auto; }
+a { color: #007bff; }
+button { font: inherit; }
+
+.account-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; margin-bottom: 16px; color: #465166; font-size: 14px; }
+.account-bar h1 { font-size: 18px; margin: 0; color: #007bff; }
+.account-bar nav { margin-left: auto; }
+.account-bar form { margin: 0; }
+.account-bar button, .memory button, .auth button, .upgrade button { width: auto; height: auto; min-height: 38px; border-radius: 8px; padding: 8px 14px; font-size: 14px; background: #007bff; color: white; border: none; cursor: pointer; }
+.account-bar button:hover, .memory button:hover, .auth button:hover, .upgrade button:hover { background: #0056b3; }
+
+.quota { font-size: 14px; color: #465166; }
+#status { color: #465166; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; }
+#status:empty { display: none; }
+
+.workspace { width: 1440px; max-width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 24px; align-items: start; }
+
+.chat-container { width: 100%; height: min(800px, 90vh); position: sticky; top: 24px; background: white; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; border: 1px solid #e0e0e0; }
+.chat-header { background: #007bff; color: white; padding: 16px 20px; min-height: 62px; font-weight: bold; font-size: 18px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.chat-header span { flex: 1; }
+.chat-header #reset { width: auto; height: 30px; padding: 0 9px; font-size: 12px; border-radius: 7px; background: #ffffff26; border: 1px solid #ffffff66; color: white; cursor: pointer; }
+.chat-messages { flex: 1; padding: 20px; overflow-y: auto; background: #f8f9fa; display: flex; flex-direction: column; gap: 15px; min-height: 120px; }
+.message { max-width: 80%; padding: 12px 16px; border-radius: 14px; font-size: 15px; line-height: 1.4; overflow-wrap: anywhere; white-space: pre-wrap; }
+.message.assistant { align-self: flex-start; background: white; color: #333; border: 1px solid #e4e6eb; border-top-left-radius: 4px; }
+.message.user { align-self: flex-end; background: #007bff; color: white; border-top-right-radius: 4px; }
+.chat-input-area { padding: 15px; background: white; border-top: 1px solid #eee; display: flex; gap: 10px; align-items: center; flex-shrink: 0; }
+.chat-input-area input { flex: 1; min-width: 0; width: 0; padding: 12px 18px; border: 1px solid #ccd0d5; border-radius: 24px; outline: none; font-size: 15px; }
+.chat-input-area button { flex-shrink: 0; background: #007bff; color: white; border: none; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; transition: background .2s; }
+.chat-input-area button:hover { background: #0056b3; }
+button:disabled { opacity: .55; cursor: wait; }
+
+.memory { padding: 12px 16px; border-top: 1px solid #eee; background: white; font-size: 13px; overflow: auto; max-height: 240px; flex-shrink: 0; }
+.memory summary { cursor: pointer; color: #465166; }
+.memory input { width: 100%; border-radius: 8px; font-size: 14px; padding: 10px; border: 1px solid #ccd0d5; }
+.memory li { margin: 10px 0; overflow-wrap: anywhere; }
+.memory li button { margin-top: 6px; }
+.memory form button { margin-top: 8px; }
+.muted { color: #777; font-size: 13px; line-height: 1.5; }
+
+.sd-panel { background: white; border: 1px solid #e0e0e0; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 24px #00000012; min-width: 0; }
+.sd-panel .chat-header { background: #007bff; }
+.sd-body { padding: 24px; }
+.sd-panel label { display: flex; flex-direction: column; gap: 7px; font-size: 14px; color: #394454; margin-bottom: 16px; }
+.sd-panel input, .sd-panel textarea { width: 100%; min-width: 0; border: 1px solid #ccd0d5; border-radius: 8px; padding: 10px; font: inherit; }
+.sd-panel textarea { resize: vertical; }
+.sd-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.sd-panel button { width: auto; border-radius: 8px; padding: 0 18px; height: 45px; font-size: 15px; background: #007bff; color: white; border: none; cursor: pointer; }
+.sd-panel button:hover { background: #0056b3; }
+.sd-preview { background: #f8f9fa; border: 1px dashed #ccd0d5; border-radius: 12px; padding: 16px; margin-top: 16px; text-align: center; }
+.sd-preview img, .preview { max-width: 100%; height: auto; border-radius: 8px; margin-top: 12px; }
+#init-preview { max-height: 160px; max-width: 100%; margin-bottom: 12px; }
+#init-preview[hidden], #clear-init[hidden] { display: none; }
+
+.auth, .upgrade { max-width: 520px; margin: 40px auto; padding: 24px; background: white; border: 1px solid #e0e0e0; border-radius: 16px; box-shadow: 0 8px 24px #00000012; }
+.upgrade { max-width: 800px; }
+.auth label { display: block; margin: 16px 0; }
+.auth input { display: block; width: 100%; margin-top: 8px; border-radius: 8px; padding: 12px 18px; border: 1px solid #ccd0d5; font-size: 15px; }
+
+input:focus-visible, textarea:focus-visible, button:focus-visible, summary:focus-visible, a:focus-visible { outline: 2px solid #0056b3; outline-offset: 3px; }
+
+@media (max-width: 950px) { .workspace { grid-template-columns: 1fr; } .chat-container { position: static; height: 650px; } body { padding: 12px; } }
+@media (max-width: 480px) { .sd-grid { grid-template-columns: 1fr 1fr; } .sd-body { padding: 16px; } }

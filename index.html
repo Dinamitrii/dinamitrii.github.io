@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="bg">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Local AI · Локален AI Асистент</title>
+<link rel="stylesheet" href="style.css">
+<main>
+<header class="account-bar">
+  <h1>Локален AI Асистент</h1>
+  <span id="account-info"></span>
+  <nav><a href="index.html">Начало</a> · <a href="upgrade.html">Upgrade</a></nav>
+  <button id="logout-btn" type="button">Изход</button>
+</header>
+
+<div id="quota" class="quota"></div>
+<p id="status" role="status" aria-live="polite"></p>
+
+<div class="workspace">
+  <section class="sd-panel" aria-label="Генериране на изображения">
+    <div class="chat-header">sd-server · Изображения</div>
+    <div class="sd-body">
+      <form id="image">
+        <label>Prompt<textarea name="prompt" maxlength="4000" rows="4" required placeholder="Опишете изображението..."></textarea></label>
+        <label>Negative prompt<textarea name="negative_prompt" maxlength="4000" rows="2" placeholder="Нежелани елементи (по избор)"></textarea></label>
+        <div class="sd-grid">
+          <label>Размер<input value="512 × 512" readonly></label>
+          <label>Steps<input name="steps" type="number" min="1" max="100" value="20" required></label>
+          <label>CFG<input name="cfg_scale" type="number" min="0" max="30" step="0.1" value="3.5" required></label>
+          <label>Seed (−1 = случаен)<input name="seed" type="number" min="-1" max="2147483647" value="-1" required></label>
+          <label>Batch<input value="1" readonly></label>
+          <label>Strength<input id="strength" name="strength" type="number" min="0" max="1" step="0.05" value="0.7" disabled required></label>
+        </div>
+        <label>Init image (по избор)<input id="init" type="file" accept="image/png,image/jpeg,image/webp"></label>
+        <img id="init-preview" alt="Изходно изображение" hidden>
+        <button id="clear-init" type="button" hidden>Премахни изображението</button>
+        <p class="muted">512×512 и batch 1 са фиксирани за текущата конфигурация. Strength се използва само с init image.</p>
+        <button type="submit">Generate</button>
+      </form>
+      <div id="images" class="sd-preview">Резултатът ще се появи тук.</div>
+    </div>
+  </section>
+
+  <div class="chat-container">
+    <div class="chat-header"><span>Локален AI Асистент</span><button id="reset" type="button">Нов чат</button></div>
+    <div id="messages" class="chat-messages"></div>
+    <form id="chat" class="chat-input-area">
+      <input name="message" maxlength="12000" required placeholder="Напишете съобщение..." autocomplete="off" aria-label="Съобщение">
+      <button type="submit" aria-label="Изпрати">➤</button>
+    </form>
+    <details class="memory">
+      <summary>Постоянна памет — моите факти</summary>
+      <p class="muted">Нов чат изтрива разговора. Квотата и запазените факти остават.</p>
+      <ul id="facts"></ul>
+      <form id="fact"><label>Нов факт<input name="content" maxlength="500" required></label><button>Запомни</button></form>
+    </details>
+  </div>
+</div>
+</main>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+<script>
+let pendingChat = null, imageSignature = null;
+
+function showPending() {
+  if (!pendingChat) return;
+  el('messages').append(node('div', pendingChat, 'message user'), node('div', 'Изпращане / изчакване на модела…', 'message assistant'));
+  el('messages').scrollTop = el('messages').scrollHeight;
+}
+
+async function refresh() {
+  const s = await api('/api/state');
+  el('quota').textContent = ['chat', 'image'].map((k, i) => (i ? 'Изображения: ' : 'Чат токени: ') + s.usage[k].used + ' / ' + (s.usage[k].limit ?? '∞')).join(' · ');
+  el('messages').replaceChildren(...s.messages.map(m => node('div', m.content, 'message ' + m.role)));
+  if (!s.messages.length) el('messages').append(node('div', 'Здравейте! Аз съм Вашият локален AI асистент. С какво мога да помогна? 🛠️', 'message assistant'));
+  showPending();
+  el('messages').scrollTop = el('messages').scrollHeight;
+  el('facts').replaceChildren();
+  for (const f of s.facts) {
+    const li = node('li', f.content), b = node('button', 'Изтрий');
+    b.onclick = () => run(b, async () => { await api('/api/facts', { delete_id: f.id }); await refresh(); });
+    li.append(b);
+    el('facts').append(li);
+  }
+  const signature = JSON.stringify(s.images);
+  if (signature === imageSignature) return;
+  imageSignature = signature;
+  el('images').replaceChildren();
+  if (!s.images.length) el('images').textContent = 'Резултатът ще се появи тук.';
+  for (const im of s.images) {
+    const img = node('img', undefined, 'preview');
+    img.src = API + '/api/images/' + im.id;
+    img.alt = im.prompt;
+    const a = node('a', 'Изтегли PNG');
+    a.href = img.src;
+    a.download = 'image-' + im.id + '.png';
+    el('images').append(img, node('p', im.prompt), a);
+  }
+}
+
+for (const id of ['fact', 'image']) el(id).onsubmit = e => {
+  e.preventDefault();
+  const form = e.currentTarget;
+  run(form.querySelector('button[type=submit]') || form.querySelector('button'), async () => {
+    const data = Object.fromEntries(new FormData(form));
+    if (id === 'image') {
+      for (const k of ['steps', 'cfg_scale', 'seed', 'strength']) data[k] = Number(data[k] ?? 0.7);
+      const file = el('init').files[0];
+      if (file) {
+        if (file.size > 10 * 1024 * 1024) throw Error('Изображението трябва да е до 10 MB.');
+        data.init_image = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = () => reject(Error('Файлът не се прочете.'));
+          reader.readAsDataURL(file);
+        });
+      }
+    }
+    await api(id === 'chat' ? '/api/chat' : id === 'fact' ? '/api/facts' : '/api/generate', data);
+    if (id !== 'image') form.reset();
+    await refresh();
+  });
+};
+
+el('chat').onsubmit = async e => {
+  e.preventDefault();
+  if (pendingChat) return;
+  const form = e.currentTarget, input = form.elements.message, button = form.querySelector('button');
+  const message = input.value.trim();
+  if (!message) return;
+  pendingChat = message; input.value = ''; button.disabled = true; el('reset').disabled = true; showPending();
+  const started = performance.now();
+  try {
+    const result = await api('/api/chat', { message });
+    pendingChat = null;
+    await refresh();
+    const t = result.timings;
+    el('status').textContent = t ? `Отговор за ${((performance.now() - started) / 1000).toFixed(1)} сек. · Подготовка: ${t.prepare_seconds} сек. · Модел: ${t.generation_seconds} сек.` : 'Готово.';
+  } catch (error) {
+    pendingChat = null;
+    if (!input.value) input.value = message;
+    try { await refresh(); } catch (_) {}
+    el('status').textContent = error.message;
+  } finally {
+    pendingChat = null; button.disabled = false; el('reset').disabled = false; input.focus();
+  }
+};
+
+let previewUrl;
+function updateInit() {
+  if (previewUrl) URL.revokeObjectURL(previewUrl);
+  const file = el('init').files[0];
+  el('init-preview').hidden = el('clear-init').hidden = !file;
+  el('strength').disabled = !file;
+  if (file) { previewUrl = URL.createObjectURL(file); el('init-preview').src = previewUrl; }
+  else el('init-preview').removeAttribute('src');
+}
+el('init').onchange = updateInit;
+el('clear-init').onclick = () => { el('init').value = ''; updateInit(); };
+el('reset').onclick = () => { if (confirm('Да изтрия текущия разговор? Квотата и фактите остават.')) run(el('reset'), async () => { await api('/api/reset', {}); await refresh(); }); };
+
+(async () => {
+  await initAccountBar();
+  refresh().catch(e => el('status').textContent = e.message);
+})();
+</script>
+</html>
