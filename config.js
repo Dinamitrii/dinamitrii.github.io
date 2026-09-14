@@ -1,1 +1,1 @@
-window.API_BASE = 'https://activities-xhtml-hypothesis-civic.trycloudflare.com';
+window.API_BASE = 'https://floors-strengths-partly-wheel.trycloudflare.com';
