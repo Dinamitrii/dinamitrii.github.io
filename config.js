@@ -1,1 +1,1 @@
-window.API_BASE = 'https://cells-documents-lafayette-westminster.trycloudflare.com';
+window.API_BASE = 'https://activities-xhtml-hypothesis-civic.trycloudflare.com';
