@@ -1,1 +1,1 @@
-window.API_BASE = 'https://predictorian.eu.org';
+window.API_BASE = 'https://downloading-low-template-rating.trycloudflare.com';
