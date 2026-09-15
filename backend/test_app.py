@@ -125,6 +125,33 @@ class PortalTests(unittest.TestCase):
             self.assertEqual(self.post('/api/chat', {'message': 'Hello'}).status_code, 502)
         self.assertEqual(self.client.get('/api/state').json['usage']['chat']['used'], 0)
 
+    def test_chat_reports_length_stop_and_preserves_partial_reply(self):
+        def backend(path, data, timeout=30):
+            result = self.mock_llama(path, data, timeout)
+            if path == '/v1/chat/completions':
+                result['choices'][0]['finish_reason'] = 'length'
+            return result
+        with patch.object(m, 'llama_post', side_effect=backend):
+            response = self.post('/api/chat', {'message': 'Hello'})
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json['truncated'])
+        self.assertEqual(response.json['finish_reason'], 'length')
+        self.assertEqual(response.json['max_tokens'], 1384)
+        self.assertEqual(self.client.get('/api/state').json['messages'][-1]['content'], response.json['reply'])
+
+    def test_unlimited_chat_receives_full_response_budget(self):
+        def backend(path, data, timeout=30):
+            if path == '/v1/chat/completions':
+                self.assertEqual(data['max_tokens'], 4096)
+                self.assertEqual(timeout, 600)
+                return {'choices': [{'message': {'content': 'Complete.'}, 'finish_reason': 'stop'}],
+                        'usage': {'prompt_tokens': 100, 'completion_tokens': 20}}
+            return self.mock_llama(path, data, timeout)
+        with patch.object(m, 'remaining', return_value=None), patch.object(m, 'MAX_REPLY', 4096), patch.object(m, 'llama_post', side_effect=backend):
+            response = self.post('/api/chat', {'message': 'Hello'})
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.json['truncated'])
+
     def test_timeout_retains_reservation_and_operator_reconciliation(self):
         def backend(path, data, timeout=30):
             if path == '/v1/chat/completions':

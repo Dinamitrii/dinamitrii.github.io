@@ -83,7 +83,7 @@ FREE_CHAT, FREE_IMAGES = 1500, 5
 PAID_CHAT = int(os.environ.get('PAID_CHAT_LIMIT', '0'))
 PAID_IMAGES = int(os.environ.get('PAID_IMAGE_LIMIT', '0'))
 CONTEXT = int(os.environ.get('CONTEXT_TOKENS', '32768'))
-MAX_REPLY = int(os.environ.get('MAX_RESPONSE_TOKENS', '2048'))
+MAX_REPLY = int(os.environ.get('MAX_RESPONSE_TOKENS', '4096'))
 if min(PAID_CHAT, PAID_IMAGES) < 0 or CONTEXT < 128 or MAX_REPLY < 1:
     raise RuntimeError('Invalid quota/context configuration')
 SYSTEM = ('Ти си полезен локален AI асистент. Отговаряй на български. '
@@ -463,8 +463,9 @@ def chat():
         event = reserve('chat', prompt + 16 + maximum)
         try:
             result = llama_post('/v1/chat/completions', {'model': MODEL, 'messages': messages,
-                               'temperature': 0.7, 'max_tokens': maximum, 'stream': False}, 300)
+                               'temperature': 0.7, 'max_tokens': maximum, 'stream': False}, 600)
             reply = result['choices'][0]['message']['content']
+            finish_reason = result['choices'][0].get('finish_reason')
             reported = result['usage']
             pt, ct = reported['prompt_tokens'], reported['completion_tokens']
             if not isinstance(reply, str) or not reply.strip() or type(pt) is not int or type(ct) is not int or min(pt, ct) < 0:
@@ -477,7 +478,9 @@ def chat():
             finish(event, 'success', pt + ct, pt, ct,
                    'Backend exceeded reservation' if pt + ct > prompt + 16 + maximum else '')
             c.executemany('INSERT INTO messages(conversation_id,role,content) VALUES(?,?,?)', [(cid, 'user', message), (cid, 'assistant', reply)])
-        return jsonify(reply=reply, usage=usage(), timings={
+        return jsonify(reply=reply, finish_reason=finish_reason,
+                       truncated=finish_reason == 'length', max_tokens=maximum,
+                       usage=usage(), timings={
             'prepare_seconds': round(prepared - started, 3),
             'generation_seconds': round(time.perf_counter() - prepared, 3)})
 

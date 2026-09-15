@@ -149,6 +149,7 @@ el('chat').onsubmit = async e => {
     await refresh();
     const t = result.timings;
     el('status').textContent = t ? `Отговор за ${((performance.now() - started) / 1000).toFixed(1)} сек. · Подготовка: ${t.prepare_seconds} сек. · Модел: ${t.generation_seconds} сек.` : 'Готово.';
+    if (result.truncated) el('status').textContent += ` Отговорът е прекъснат: достигнат е лимитът от ${result.max_tokens} токена. Можете да изпратите „Продължи“, ако имате оставаща квота.`;
   } catch (error) {
     pendingChat = null;
     if (!input.value) input.value = message;
