@@ -1,1 +1,1 @@
-window.API_BASE = 'https://downloading-low-template-rating.trycloudflare.com';
+window.API_BASE = 'https://ladder-cdt-calendars-magnet.trycloudflare.com';
