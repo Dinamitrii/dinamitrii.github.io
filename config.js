@@ -1,1 +1,1 @@
-window.API_BASE = 'https://floors-strengths-partly-wheel.trycloudflare.com';
+window.API_BASE = 'https://predictorian.eu.org';
