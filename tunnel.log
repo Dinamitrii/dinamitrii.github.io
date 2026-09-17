@@ -43,3 +43,17 @@ nohup: ignoring input
 2026-09-14T21:38:36Z INF precheck component="TCP Connectivity" details="HTTP/2 connection successful" run_id=62717afb-f38e-4115-94e9-3865d530e0bd status=pass target=region2.v2.argotunnel.com
 2026-09-14T21:38:36Z INF precheck component="Cloudflare API" details="API is reachable" run_id=62717afb-f38e-4115-94e9-3865d530e0bd status=pass target=api.cloudflare.com:443
 2026-09-14T21:38:36Z INF precheck complete hard_fail=false run_id=62717afb-f38e-4115-94e9-3865d530e0bd suggested_protocol=quic
+2026-09-16T22:21:03Z ERR  error="Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared: dial tcp 127.0.0.1:5005: connect: connection refused" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5005
+2026-09-16T22:21:03Z ERR  error="Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared: dial tcp 127.0.0.1:5005: connect: connection refused" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5005
+2026-09-16T22:21:03Z ERR Request failed error="Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared: dial tcp 127.0.0.1:5005: connect: connection refused" connIndex=0 dest=http://prescription-guards-destinations-derek.trycloudflare.com/ event=0 ip=198.41.192.167 type=http
+2026-09-16T22:21:03Z ERR Request failed error="Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared: dial tcp 127.0.0.1:5005: connect: connection refused" connIndex=0 dest=https://prescription-guards-destinations-derek.trycloudflare.com/ event=0 ip=198.41.192.167 type=http
+2026-09-17T22:20:27Z ERR  error="Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared: dial tcp 127.0.0.1:5005: connect: connection refused" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5005
+2026-09-17T22:20:27Z ERR Request failed error="Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared: dial tcp 127.0.0.1:5005: connect: connection refused" connIndex=0 dest=https://prescription-guards-destinations-derek.trycloudflare.com/ event=0 ip=198.41.192.167 type=http
+2026-09-17T22:20:27Z ERR  error="Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared: dial tcp 127.0.0.1:5005: connect: connection refused" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5005
+2026-09-17T22:20:27Z ERR Request failed error="Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared: dial tcp 127.0.0.1:5005: connect: connection refused" connIndex=0 dest=http://prescription-guards-destinations-derek.trycloudflare.com/ event=0 ip=198.41.192.167 type=http
+2026-09-17T23:03:49Z INF Initiating graceful shutdown due to signal terminated ...
+2026-09-17T23:03:49Z INF Retrying connection in up to 1s connIndex=0 event=0 ip=198.41.192.167
+2026-09-17T23:03:49Z ERR Connection terminated connIndex=0
+2026-09-17T23:03:49Z ERR no more connections active and exiting
+2026-09-17T23:03:49Z INF Tunnel server stopped
+2026-09-17T23:03:49Z INF Metrics server stopped

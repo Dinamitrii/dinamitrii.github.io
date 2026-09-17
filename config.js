@@ -1,1 +1,1 @@
-window.API_BASE = 'https://lender-binding-denver-occupation.trycloudflare.com';
+window.API_BASE = 'https://downloadable-interior-breaks-soap.trycloudflare.com/';
