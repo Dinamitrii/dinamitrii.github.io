@@ -1,15 +1,89 @@
 <!doctype html>
 <html lang="bg">
+
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+
 <title>Local AI · Локален AI Асистент</title>
+
 <link rel="stylesheet" href="style.css">
+
+
+        <!-- Icons -->
+        <link rel="apple-touch-icon" sizes="180x180" href="https://elf.site/apple-touch-icon.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="https://elf.site/icon-192x192.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="https://elf.site/icon-32х32.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="https://elf.site/icon-16х16.png" />
+
+        <!-- OG -->
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://609f1cb4b5f24fbba66bde16609f6d68.elf.site" />
+        <meta property="og:title" content="Untitled WhatsApp Chat" />
+        <meta property="og:description" content="Click the link to interact with Elfsight WhatsApp Chat" />
+        <meta property="og:image" content="https://universe-static.elfsightcdn.com/widget-thumbnails/4d126201-3c39-433a-ad60-a735484c3036@2x.png" />
+        <meta property="og:image:alt" content="Untitled WhatsApp Chat" />
+
+        <!-- Preloading -->
+        <link rel="preconnect" href="https://core.service.elfsight.com" />
+        <link rel="preload" href="https://universe-static.elfsightcdn.com/app-releases/whatsapp-chat/stable/v1.25.3/fba6eb502ccb004681e378493cff25b520672860/widget/whatsappChat.js" as="script" />
+
+
+
+
+
 <main>
 <header class="account-bar">
   <h1>Локален AI Асистент</h1>
   <span id="account-info"></span>
   <nav><a href="index.html">Начало</a> · <a href="upgrade.html">Upgrade</a></nav>
   <button id="logout-btn" type="button">Изход</button>
+
+
+        <!-- Platform -->
+
+        <script
+          src="https://static.elfsight.com/platform/platform.js"
+          async
+        ></script>
+
+        <!-- Etc -->
+        <script
+          src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.3.7/iframeResizer.contentWindow.js"
+          async
+        ></script>
+
+        <style>
+          body {
+            margin: 0;
+            font:
+              400 18px/1.555 -apple-system,
+              BlinkMacSystemFont,
+              Roboto,
+              Open Sans,
+              Helvetica Neue,
+              sans-serif;
+          }
+
+          body:not(.iframe) {
+            padding: 60px 40px;
+          }
+
+          @media (max-width: 900px) {
+            body:not(.iframe) {
+              padding: 32px 20px;
+            }
+          }
+        </style>
+  <div class="elfsight-app-609f1cb4-b5f2-4fbb-a66b-de16609f6d68"></div>
+
+  <script>
+    document.body.classList.toggle('iframe', window !== window.parent);
+    document.body.style.padding = '';
+  </script>
+
+
+
+
 </header>
 
 <div id="quota" class="quota"></div>
